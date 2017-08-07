@@ -2,132 +2,146 @@
 const datbase = require('../main/datbase.js');
 var loadAllItems = datbase.loadAllItems() ;
 var loadPromotions = datbase.loadPromotions() ;
-   module.exports =  function  printInventory(inputs){
-       
-      let allItems = [];
-    let promotions = [];
-    
-    allItems = loadAllItems;
-    promotions = loadPromotions;
-    
-    
-    let count = 1;
-    let item = [];
-    let xiaoji = [];
-    //获取商品购买个数
-    for (var i=0; i<inputs.length; i++) {
-            	for (var j=i+1; j<inputs.length; j++) {
-            		if (inputs[i] === inputs[j]) {
-            			count++;
-                        inputs.splice(j,1);
-                        j--;
-            		}
-            	}
-            	item[i] = inputs[i];
-            	xiaoji[i] = count;
-            	count = 1;
-            }
-            var total = new Array();
-            for (var i=0; i<item.length; i++) {
-            	total[i] = {item:' ', xiaoji:0};
-            	total[i].item = item[i];
-            	total[i].xiaoji = xiaoji[i];
-            }
-            let c = [];
-            for (let i in total) {
-            	if(total[i].item.indexOf('-') > -1) {
-            		
-            		c = total[i].item.split('-');
-            		total[i].item = c[0];
-                    total[i].xiaoji = c[1];
-            	}
-            }
-    
+module.exports = function  printInventory(inputs) {
+      	let allItems = [];
+        let promotions = [];
+        allItems = loadAllItems;
+        promotions = loadPromotions;
 
-    
-   
-    
-    //商品信息
-    let total2 = [];
-    for (let i in total) {
-    	total2[i] = {item:' ', count: 0, price: 0,save: 0,unit: ' ',name:''};
-    	total2[i].item = total[i].item;
-    	total2[i].count = total[i].xiaoji;
-    }
+        let goodsInfo = [];
+        goodsInfo = baseInformation(inputs, allItems);
 
-    for (let i in allItems) {
-    	for (let j in total2) {
-    		if (allItems[i].barcode === total2[j].item) {
-    			
-    			let f = allItems[i].price;
-    			total2[j].price = f.toFixed(2);
-    			total2[j].unit = allItems[i].unit;
-    			total2[j].name = allItems[i].name;
-    		}
-    	}
-    }
-    //挥泪赠送商品
-    let e = [];
-    let promote = [];
-    e = promotions[0].barcodes;
-    for (let i in total2) {
-    	for (let j in e) {
-    		if (total2[i].item === e[j]) {
-    			total2[i].save = 1;
-    			promote[i] = {name:' ', count1: 0,unit:' '};
-        promote[i].name = total2[i].name;
-        promote[i].unit = total2[i].unit;
-    		}
-    	}
-    	
-    	promote[i] = {name:' ', count1: 0,unit:' '};
-    	promote[i].name = total2[i].name;
-    	promote[i].unit = total2[i].unit;
-    }
-    promote.splice(1,1);
-    for (let i in total2) {
-    	for (let j in promote) {
-    		if (total2[i].name === promote[j].name) {
-    			promote[j].count1 = total2[i].save;
-    			
-    		}
-    	}
-    }
-    //小计
-    let little = [];
-    for (let i in total2) {
-        let p1 = total2[i].price * total2[i].count;
-        let p2 = total2[i].price * total2[i].save;
-        let p = p1 - p2;
-        little.push(p.toFixed(2));
-    }
-//总计和节省
-    let buy1 = 0;
-    let buy2 = 0;
-    for (let i in total2) {
-        let k = total2[i].count * total2[i].price - total2[i].save * total2[i].price;
-        buy1 += k;
+        let promotion = [];
+        promotion =  get_promotion(goodsInfo, promotions);
 
-        let m = total2[i].price * total2[i].save;
-        buy2 += m;
-     }
-     let buy = [];
-     buy.push(buy1.toFixed(2));
-     buy.push(buy2.toFixed(2));
-     
-   //输出结果 
-    console.log('***<没钱赚商店>购物清单***\n'+
-        '名称：'+total2[0].name+'，'+'数量：'+total2[0].count+total2[0].unit+'，'+'单价：'+total2[0].price+'(元)'+'，'+'小计：'+little[0]+'(元)\n'+
-         '名称：'+total2[1].name+'，'+'数量：'+total2[1].count+total2[1].unit+'，'+'单价：'+total2[1].price+'(元)'+'，'+'小计：'+little[1]+'(元)\n'+
-         '名称：'+total2[2].name+'，'+'数量：'+total2[2].count+total2[2].unit+'，'+'单价：'+total2[2].price+'(元)'+'，'+'小计：'+little[2]+'(元)\n'+
+        goodsInfo = add_1(goodsInfo, promotion);
+        
+        let subtotal = [];
+        subtotal = calculate_1(goodsInfo);
+
+        let payMent = [];
+        payMent = calculate_2(goodsInfo);
+
+        console.log('***<没钱赚商店>购物清单***\n'+
+        '名称：'+goodsInfo[0].name+'，'+'数量：'+goodsInfo[0].count+goodsInfo[0].unit+'，'+'单价：'+goodsInfo[0].price+'(元)'+'，'+'小计：'+subtotal[0]+'(元)\n'+
+         '名称：'+goodsInfo[1].name+'，'+'数量：'+goodsInfo[1].count+goodsInfo[1].unit+'，'+'单价：'+goodsInfo[1].price+'(元)'+'，'+'小计：'+subtotal[1]+'(元)\n'+
+         '名称：'+goodsInfo[2].name+'，'+'数量：'+goodsInfo[2].count+goodsInfo[2].unit+'，'+'单价：'+goodsInfo[2].price+'(元)'+'，'+'小计：'+subtotal[2]+'(元)\n'+
          '----------------------\n'+
          '挥泪赠送商品：\n'+
-         '名称：'+promote[0].name+'，'+'数量：'+promote[0].count1+promote[0].unit+'\n'+
-         '名称：'+promote[1].name+'，'+'数量：'+promote[1].count1+promote[1].unit+'\n'+
+         '名称：'+promotion[0].name+'，'+'数量：'+promotion[0].count+promotion[0].unit+'\n'+
+         '名称：'+promotion[1].name+'，'+'数量：'+promotion[1].count+promotion[1].unit+'\n'+
          '----------------------\n'+
-         '总计：'+buy[0]+'(元)\n'+
-         '节省：'+buy[1]+'(元)\n'+
+         '总计：'+payMent[0]+'(元)\n'+
+         '节省：'+payMent[1]+'(元)\n'+
          '**********************'
         );
-   };
 
+
+      };
+      
+      promotions = loadPromotions();
+      function baseInformation(inputs, allItems) {
+        
+        let num = 1;
+        let barcode = [];
+        let count = [];
+        for (let i = 0; i < inputs.length; i++) {
+      	   for (let j = i + 1; j < inputs.length; j++) {
+      	   	if (inputs[i] === inputs[j]) {
+      	   		num++;
+      	   		inputs.splice(j, 1);
+      	   		j--;
+      	   	}
+      	   }
+      	   barcode[i] = inputs[i];
+           count[i] = num;
+           num = 1;
+        }
+
+        let goodsInfo = [];
+        for (let i = 0; i < barcode.length; i++) {
+        	goodsInfo[i] = {barcode: ' ',name: ' ', unit: ' ', price: 0, count: 0, saveCount: 0};
+        	goodsInfo[i].barcode =  barcode[i];
+        	goodsInfo[i].count = count[i];
+        }
+        let c = [];
+        for (let i in goodsInfo) {
+            if(goodsInfo[i].barcode.indexOf('-') > -1) {
+            		
+                c = goodsInfo[i].barcode.split('-');
+            	goodsInfo[i].barcode = c[0];
+                goodsInfo[i].count = c[1];
+            }
+        }
+        
+        for (let i = 0; i <allItems.length; i++) {
+        	for (let j = 0; j < goodsInfo.length; j++) {
+                if (goodsInfo[j].barcode === allItems[i].barcode) {
+                	
+                	goodsInfo[j].unit = allItems[i].unit;
+                	let p = allItems[i].price;
+                	goodsInfo[j].price = p.toFixed(2);
+                	goodsInfo[j].name = allItems[i].name;
+                }
+        	}
+        }
+        return goodsInfo;
+      }
+      
+
+      
+      function get_promotion(goodsInfo, promotions) {
+        let promotion = [];
+        let pro = [];
+        pro =  promotions[0].barcodes;
+        for (let i = 0; i < goodsInfo.length; i++) {
+         	for (let j = 0; j < pro.length; j++) {
+         		if (goodsInfo[i].barcode === pro[j]) {
+         		   promotion[i] = {name: ' ', count: 0, unit: ' '};
+                   promotion[i].name = goodsInfo[i].name;
+                   promotion[i].unit = goodsInfo[i].unit;
+                   promotion[i].count = 1;
+         		}
+         	}
+        }
+        promotion.splice(1, 1);
+        return promotion;
+      }
+      function add_1(goodsInfo, promotion) {
+      	for (let i = 0; i < goodsInfo.length; i++) {
+      		for (let j = 0; j < promotion.length; j++) {
+      			if (goodsInfo[i].name === promotion[j].name) {
+      				goodsInfo[i].saveCount = 1;
+      			}
+      		}
+      	}
+      	return goodsInfo;
+      }
+
+      
+      function calculate_1(goodsInfo) {
+      	let subtotal = [];
+      	for (let i = 0; i < goodsInfo.length; i++) {
+      		let p1 = goodsInfo[i].price * goodsInfo[i].count;
+            let p2 = goodsInfo[i].price * goodsInfo[i].saveCount;
+            let p = p1 - p2;
+            subtotal.push(p.toFixed(2));
+      	}
+        
+        return subtotal;
+      }
+    
+      function calculate_2(goodsInfo) {
+      	let total = 0;
+      	let save = 0;
+      	for (let i = 0; i < goodsInfo.length; i++) {
+           let k = goodsInfo[i].count * goodsInfo[i].price - goodsInfo[i].saveCount * goodsInfo[i].price;
+           total += k;
+           let m = goodsInfo[i].price * goodsInfo[i].saveCount;
+           save += m;
+      	}
+      	let payMent = [];
+      	payMent.push(total.toFixed(2));
+      	payMent.push(save.toFixed(2));
+      	return payMent;
+      }
