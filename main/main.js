@@ -39,7 +39,7 @@ module.exports = function  printInventory(inputs) {
 
       };
       
-      promotions = loadPromotions();
+     
       function baseInformation(inputs, allItems) {
         
         let num = 1;
